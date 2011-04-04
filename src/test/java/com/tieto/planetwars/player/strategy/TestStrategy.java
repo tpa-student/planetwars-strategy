@@ -1,6 +1,8 @@
 package com.tieto.planetwars.player.strategy;
 
 
+import static org.junit.Assert.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +43,8 @@ public class TestStrategy {
 		Mockito.when(playersPlanet.getNumberOfShips()).thenReturn( 10 );
 		Mockito.when(playersPlanet.getOwner()).thenReturn( player );
 		Mockito.when(neutralPlanet.getNumberOfShips()).thenReturn( 7 );
-		Mockito.when(neutralPlanet.getOwner()).thenReturn( null ); 
+		Mockito.when(neutralPlanet.getOwner()).thenReturn( null );
+		Mockito.when(player.getId()).thenReturn(1);		
 	}
 	
 	@Test
@@ -130,12 +133,14 @@ public class TestStrategy {
 	}
 	
 	@Test
-	public void no_commands_if_no_neutral_planets() throws Exception {
+	public void attack_enemy_planet_if_no_neutral_planets() throws Exception {
 		// given
 		planets.remove( neutralPlanet );
 		Player opponent = Mockito.mock( Player.class );
+		Mockito.when( opponent.getId() ).thenReturn( 2 );
 		Planet other    = Mockito.mock( Planet.class );
 		Mockito.when( other.getOwner() ).thenReturn( opponent );
+		Mockito.when( other.getNumberOfShips()).thenReturn( 3 );
 		planets.add( other );
 		WarsMap warsMap = new WarsMap(planets, fleets);
 		
@@ -143,19 +148,81 @@ public class TestStrategy {
 		List<Command> commands = myStrategy.doTurn(warsMap, player);
 		
 		// then
-		Assertions.assertThat(commands.isEmpty()).isTrue();
+		Assertions.assertThat(commands.size()).isEqualTo( 1 );
+		Command returnedCommand = commands.get( 0 );
+		
+		Assertions.assertThat( returnedCommand.getNumShips() ).isEqualTo( other.getNumberOfShips() + 1 );
+		Assertions.assertThat( returnedCommand.getDestinationPlanet() ).isEqualTo( other );
+		Assertions.assertThat( returnedCommand.getSourcePlanet() ).isEqualTo( playersPlanet );
 	}
 	
 	@Test
-	public void no_commands_if_there_are_no_sufficient_force_in_a_single_planet_to_conquer_neutral_planet() throws Exception {
+	public void attack_weakest_enemy_planet_if_no_neutral_planets() throws Exception {
 		// given
-		Mockito.when( neutralPlanet.getNumberOfShips() ).thenReturn( 20 );
+		planets.remove( neutralPlanet );
+		Player opponent = Mockito.mock( Player.class );
+		Mockito.when( opponent.getId() ).thenReturn( 2 );
+		Planet other    = Mockito.mock( Planet.class );
+		Mockito.when( other.getOwner() ).thenReturn( opponent );
+		Mockito.when( other.getNumberOfShips()).thenReturn( 3 );
+		planets.add( other );
+
+		Planet weakest    = Mockito.mock( Planet.class );
+		Mockito.when( weakest.getOwner() ).thenReturn( opponent );
+		Mockito.when( weakest.getNumberOfShips()).thenReturn( 1 );
+		planets.add(weakest);
+		
 		WarsMap warsMap = new WarsMap(planets, fleets);
 		
-		// when
+		// when 
 		List<Command> commands = myStrategy.doTurn(warsMap, player);
 		
 		// then
+		Assertions.assertThat(commands.size()).isEqualTo( 1 );
+		Command returnedCommand = commands.get( 0 );
+		
+		Assertions.assertThat( returnedCommand.getNumShips() ).isEqualTo( weakest.getNumberOfShips() + 1 );
+		Assertions.assertThat( returnedCommand.getDestinationPlanet() ).isEqualTo( weakest );
+		Assertions.assertThat( returnedCommand.getSourcePlanet() ).isEqualTo( playersPlanet );		
+	}
+	
+	@Test
+	public void attack_from_the_strongest_planet() throws Exception {
+		// given
+		Planet strongest = Mockito.mock(Planet.class);
+		Mockito.when(strongest.getOwner()).thenReturn(player);
+		Mockito.when(strongest.getNumberOfShips()).thenReturn(100);
+		planets.add(strongest);
+		WarsMap warsMap = new WarsMap(planets, fleets);
+		
+		//when
+		List<Command> commands = myStrategy.doTurn(warsMap, player);
+		
+		//then
+		Assertions.assertThat(commands.size()).isEqualTo(1);
+		Command command = commands.get(0);
+		Assertions.assertThat(command.getNumShips()).isEqualTo(neutralPlanet.getNumberOfShips() + 1);
+		Assertions.assertThat(command.getSourcePlanet()).isEqualTo(strongest);
+		Assertions.assertThat(command.getDestinationPlanet()).isEqualTo(neutralPlanet);
+	}
+	
+	@Test
+	public void no_commands_if_no_attack_possible_for_single_planet() throws Exception {
+		// given
+		Mockito.when(neutralPlanet.getNumberOfShips()).thenReturn( 200 );
+		Player opponent = Mockito.mock( Player.class );
+		Mockito.when( opponent.getId() ).thenReturn( 2 );
+		Planet other    = Mockito.mock( Planet.class );
+		Mockito.when( other.getOwner() ).thenReturn( opponent );
+		Mockito.when( other.getNumberOfShips()).thenReturn( 300 );
+		planets.add( other );
+		WarsMap warsMap = new WarsMap(planets, fleets);
+		
+		//when
+		List<Command> commands = myStrategy.doTurn(warsMap, player);
+		
+		//then
 		Assertions.assertThat(commands.isEmpty()).isTrue();
+
 	}
 }
