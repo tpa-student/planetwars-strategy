@@ -16,36 +16,93 @@ public class KiCStrategy implements Strategy {
 
 		List<Command> commands = new ArrayList<Command>();
 
-		Planet sourcePlanet = chooseFirstSourcePlanetOwnetByPlayer(gameMap,
+		Planet sourcePlanet = chooseBestSourcePlanetOwnetByPlayer(gameMap,
 				player);
 
 		if (sourcePlanet != null) {
-			for (Planet planet : planets) {
-				int ships = 0;
-				Integer numberOfShipsOnPlanet = planet.getNumberOfShips();
-				if (sourcePlanet.getNumberOfShips() > numberOfShipsOnPlanet) {
-					ships = numberOfShipsOnPlanet + 1;
-					commands.add(new Command(sourcePlanet, planet, ships));
-					break;
+			if (thereAreNeutralPlanets(planets)) {
+				Planet firstWeakerPlanet = null;
+
+				firstWeakerPlanet = findFirstWeakerNeutralPlanet(planets,
+						sourcePlanet);
+
+				int ships = firstWeakerPlanet.getNumberOfShips() + 1;
+
+				if (firstWeakerPlanet != null)
+					commands.add(new Command(sourcePlanet, firstWeakerPlanet, 1));
+			} else {
+				Planet weakestOpponentPlanet = findWeakestOpponentPlanet(
+						planets, sourcePlanet);
+
+				int ships = weakestOpponentPlanet.getNumberOfShips() + 1;
+				// if (weakestOpponentPlanet != null)
+				// commands.add(new Command(sourcePlanet,
+				// weakestOpponentPlanet, ships));
+			}
+		}
+		return commands;
+	}
+
+	private Planet findWeakestOpponentPlanet(List<Planet> planets,
+			Planet sourcePlanet) {
+		Planet weakestOpponentPlanet = null;
+
+		for (Planet planet : planets) {
+			if (planet.getOwner().getId() == 2) {
+				if (planet.getNumberOfShips() < sourcePlanet.getNumberOfShips()) {
+					if (weakestOpponentPlanet == null) {
+						weakestOpponentPlanet = planet;
+					} else {
+						if (weakestOpponentPlanet.getNumberOfShips() > planet
+								.getNumberOfShips())
+							weakestOpponentPlanet = planet;
+					}
 				}
 			}
 		}
 
-		return commands;
+		return weakestOpponentPlanet;
 	}
 
-	private Planet chooseFirstSourcePlanetOwnetByPlayer(WarsMap gameMap,
+	private boolean thereAreNeutralPlanets(List<Planet> planets) {
+		for (Planet planet : planets) {
+			if (planet.getOwner() == null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Planet findFirstWeakerNeutralPlanet(List<Planet> planets,
+			Planet sourcePlanet) {
+
+		for (Planet planet : planets) {
+			Integer numberOfShipsOnPlanet = planet.getNumberOfShips();
+			if (planet.getOwner() == null
+					&& sourcePlanet.getNumberOfShips() > numberOfShipsOnPlanet) {
+				return planet;
+			}
+		}
+		return null;
+	}
+
+	private Planet chooseBestSourcePlanetOwnetByPlayer(WarsMap gameMap,
 			Player player) {
 		Planet sourcePlanet = null;
+
 		for (Planet planet : gameMap.getPlanets()) {
 			if (planet.getOwner() != null
 					&& planet.getOwner().getId() == player.getId()) {
-				sourcePlanet = planet;
-				break;
+				if (sourcePlanet == null) {
+					sourcePlanet = planet;
+				} else {
+					if (sourcePlanet.getNumberOfShips() < planet
+							.getNumberOfShips()) {
+						sourcePlanet = planet;
+					}
+				}
 			}
-
 		}
 		return sourcePlanet;
 	}
-
 }
