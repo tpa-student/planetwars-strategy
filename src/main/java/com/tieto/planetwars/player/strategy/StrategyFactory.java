@@ -4,7 +4,7 @@ import com.tieto.planetwars.player.Strategy;
 
 public class StrategyFactory {
 	public static Strategy createStrategy() {
-		String implementationName = LazyboneStrategy.class.getName();
+		String implementationName = SuperHiperStrategy.class.getName();
 
 		try {
 			Class<?> loadClass = ClassLoader.getSystemClassLoader().loadClass(
