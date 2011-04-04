@@ -1,8 +1,6 @@
 package com.tieto.planetwars.player.strategy;
 
 
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
 import java.util.List;
 

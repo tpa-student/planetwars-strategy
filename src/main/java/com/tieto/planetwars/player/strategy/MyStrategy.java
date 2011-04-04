@@ -17,7 +17,18 @@ public class MyStrategy implements Strategy {
 		
 		List<Planet> myPlanets = new ArrayList<Planet>();
 		List<Planet> neutralPlanets = new ArrayList<Planet>();
+		splitPlanets(player, planets, myPlanets, neutralPlanets);
 		
+		List<Command> commands = new ArrayList<Command>();
+		Command command = attackFirstNeutral(myPlanets, neutralPlanets );
+		if ( command != null ) {
+			commands.add( command );
+		}
+		
+		return commands;
+	}
+
+	private void splitPlanets(Player player, List<Planet> planets, List<Planet> myPlanets, List<Planet> neutralPlanets) {
 		for (int i = 0; i < planets.size(); ++i){
 			Planet current = planets.get( i );
 			if (current.getOwner() == null){
@@ -27,22 +38,19 @@ public class MyStrategy implements Strategy {
 				myPlanets.add( current );
 			}
 		}
-		
-		List<Command> commands = new ArrayList<Command>();
+	}
+
+	private Command attackFirstNeutral(List<Planet> myPlanets, List<Planet> neutralPlanets) {
 		for ( int i = 0; i < neutralPlanets.size(); ++i ){
 			Planet currentNeutral = neutralPlanets.get( i );
 			for ( int j = 0; j < myPlanets.size(); ++j ){
 				Planet currentMy = myPlanets.get( j );
 				if ( currentNeutral.getNumberOfShips() < currentMy.getNumberOfShips() ){
 					Command command = new Command( currentMy, currentNeutral,currentNeutral.getNumberOfShips() + 1 );
-					commands.add( command );
-					// exit loops!
-					j = myPlanets.size();
-					i = neutralPlanets.size();
+					return command;
 				}
 			}
 		}
-		
-		return commands;
+		return null;
 	}
 }
